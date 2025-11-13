@@ -18,6 +18,7 @@ class YapProject:
 
     def run(self):
         tests = self.discoverer.find_tests()
+        print(tests)
         pass
 
 

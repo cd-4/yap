@@ -21,27 +21,37 @@ class TestDiscoverer:
         self.exclude_filters = exclude_filters
         self.include_filters = include_filters
 
-    def find_test_files_in_dir(self, directory: Path):
+    def find_test_files_in_dir(
+        self, directory: Path, parent_dirs=None
+    ) -> List[TestFile]:
+        if parent_dirs == None:
+            parent_dirs = []
         test_files = []
         for entry in directory.iterdir():
             if entry.is_dir():
-                test_files.extend(self.find_test_files_in_dir(entry))
+                test_files.extend(
+                    self.find_test_files_in_dir(
+                        entry, parent_dirs=parent_dirs + [entry.name]
+                    )
+                )
             else:
                 if is_test_file(entry):
-                    test_files.append(entry)
+                    test_file = TestFile(entry, parent_dirs=parent_dirs)
+                    test_files.append(test_file)
         return test_files
 
-    def find_test_files(self):
+    def find_test_files(self) -> List[TestFile]:
         test_files = []
         for path in self.search_paths:
             if path.is_dir():
                 test_files.extend(self.find_test_files_in_dir(path))
             else:
                 test_files.append(path)
-        return [TestFile(tf) for tf in test_files]
+        return test_files
 
     def find_tests(self) -> List[ApiTest]:
         test_files = self.find_test_files()
+        print(test_files)
         tests = []
         for tf in test_files:
             tests.extend(tf.find_tests())

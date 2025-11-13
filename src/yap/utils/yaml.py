@@ -9,6 +9,18 @@ def is_yaml(path: Path):
     return n.endswith(".yaml") or n.endswith(".yml")
 
 
+def is_test(name: str):
+    prefixes = ["test-", "test_"]
+    suffixes = ["-test", "_test"]
+    for pre in prefixes:
+        if name.startswith(pre):
+            return True
+    for suf in suffixes:
+        if name.endswith(suf):
+            return True
+    return False
+
+
 def is_test_file(path: Path):
     if is_yaml(path):
         stem = path.stem
