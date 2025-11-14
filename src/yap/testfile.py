@@ -7,14 +7,11 @@ from utils.yaml import load_yaml, is_test
 
 class TestFile:
 
-    def __init__(self, path: Path, parent_dirs=None):
+    def __init__(self, path: Path, config, parent_dirs=None):
         if parent_dirs == None:
             parent_dirs = []
         self.parent_dirs = parent_dirs
         self.path = path
-        self.config = None
-
-    def set_config(self, config) -> None:
         self.config = config
 
     def find_tests(self) -> List[ApiTest]:
@@ -22,7 +19,7 @@ class TestFile:
         data = load_yaml(self.path)
         for key, test_data in data.items():
             if is_test(key):
-                tests.append(ApiTest(self, key, test_data))
+                tests.append(ApiTest(self, key, test_data, self.config))
         return tests
 
     def _get_readable_path(self):

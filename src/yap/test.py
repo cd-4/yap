@@ -1,3 +1,6 @@
+import requests
+
+
 class InvalidTestException:
 
     def __init__(self, test, message):
@@ -13,8 +16,16 @@ class ApiTestStep:
         self.id = data.get("id")
         # Mandatory
         self.path = data.get("path")
-        # Can be overridden, default to base URL
+        if self.path is None:
+            msg = f"Steps must contain `path` (step id:{self.id})"
+            raise InvalidTestException(self.api_test, msg)
+
         self.url = data.get("url")
+        if self.url is None:
+            self.url = self.config.urls.get("base")
+        if self.url is None:
+            msg = f"Steps must contain `url` or it must be defined in yap-config.yaml (step id:{self.id})"
+            raise InvalidTestException(self.api_test, msg)
         # Default to GET
         self.method = data.get("method", "GET").lower()
         # If None, don't send any data
@@ -24,13 +35,29 @@ class ApiTestStep:
         # If None, don't check anything
         self.assertions = data.get("assert", None)
 
+    @property
+    def config(self):
+        return self.api_test.config
+
+    def run(self):
+        method = getattr(requests, self.method)
+        response = method(self.url + self.path, json=self.data, headers=self.headers)
+        print(response)
+        self.perform_assertions(response)
+
+    def perform_assertions(self, response):
+        if "status-code" in self.assertions:
+            desired_rc = self.assertions["status-code"]
+            assert response.status_code == desired_rc
+
 
 class ApiTest:
 
-    def __init__(self, testfile, name, data):
+    def __init__(self, testfile, name, data, config):
         self.name = name
         self.testfile = testfile
         self.data = data
+        self.config = config
 
     def __repr__(self) -> str:
         file_path = self.testfile._get_readable_path()
@@ -52,3 +79,6 @@ class ApiTest:
 
     def run(self):
         self.generate_steps()
+
+        for step in self.test_steps:
+            step.run()

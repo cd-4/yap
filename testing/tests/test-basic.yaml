@@ -8,7 +8,7 @@ test-create-user:
         username: $vars.sample-user
         password: $vars.sample-password
       assert:
-        return-code: 200
+        status-code: 200
         response:
           token: str
 
@@ -18,7 +18,7 @@ test-create-user:
       headers:
         API-Token: $create-user.response.token
       assert:
-        return-code: 200
+        status-code: 200
 
     - id: check-bad-token
       path: /api/token/check
@@ -26,7 +26,7 @@ test-create-user:
       headers:
         API-TOKEN: asdf23
       assert:
-        return-code: 403
+        status-code: 403
 
 
 

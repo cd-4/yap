@@ -2,7 +2,7 @@
 variables:
   base_url:
     env: BASE_URL
-    default: http://127.0.0.1:5000
+    default: http://127.0.0.1:8181
   sample-user:
     env: SAMPLE_USERNAME
     default: test-user-123
@@ -11,5 +11,5 @@ variables:
     default: p4ssw0rd123!
 
 urls:
-  api: $vars.base_url
+  base: $vars.base_url
 

@@ -14,7 +14,7 @@ POSTS_BY_ID = {}
 
 def generate_token():
     characters = string.ascii_letters + string.digits
-    random_string = "".join(random.choices(characters, k=length))
+    random_string = "".join(random.choices(characters, k=20))
     return random_string
 
 
@@ -51,8 +51,8 @@ class SampleUser:
         self.token = generate_token()
         self.password = password
         self.posts = []
-        USERS_BY_ID[user_id] = self
-        USERS_BY_TOKEN[token] = self
+        USERS_BY_ID[self.id] = self
+        USERS_BY_TOKEN[self.token] = self
         USERS_BY_USERNAME[self.name] = self
 
     def to_json(self):
@@ -161,3 +161,7 @@ def create_post():
 def get_post(post_id):
     post = POSTS_BY_ID[post_id]
     return post.to_json()
+
+
+if __name__ == "__main__":
+    app.run(debug=True, port=8181)

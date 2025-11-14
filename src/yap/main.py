@@ -14,6 +14,7 @@ class YapProject:
             args.group,
             args.exclude,
             args.include,
+            self.config,
         )
 
     def run(self):

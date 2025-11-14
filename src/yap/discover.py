@@ -13,7 +13,9 @@ class TestDiscoverer:
         groups: List[str],
         exclude_filters: List[str],
         include_filters: List[str],
+        config,
     ):
+        self.config = config
         if len(search_paths) == 0:
             search_paths = [Path(os.getcwd())]
         self.search_paths = search_paths
@@ -36,7 +38,7 @@ class TestDiscoverer:
                 )
             else:
                 if is_test_file(entry):
-                    test_file = TestFile(entry, parent_dirs=parent_dirs)
+                    test_file = TestFile(entry, self.config, parent_dirs=parent_dirs)
                     test_files.append(test_file)
         return test_files
 
