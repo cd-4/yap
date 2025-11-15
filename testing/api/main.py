@@ -114,7 +114,7 @@ def check_token_endpoint():
     if not request.is_json:
         return jsonify({"error": "Request must be JSON"})
     data = request.get_json()
-    return {"success": token in USERS_BY_TOKEN}
+    return {"success": data["token"] in USERS_BY_TOKEN}
 
 
 @app.route("/api/user/list", methods=["GET"])

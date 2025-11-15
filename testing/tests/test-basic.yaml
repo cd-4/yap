@@ -15,12 +15,15 @@ test-create-user:
     - id: check-token
       path: /api/token/check
       method: POST
-      headers:
-        API-Token: $create-user.response.token
+      #headers:
+        #API-Token: $create-user.response.token
+      data:
+        token: $create-user.response.token
       assert:
         status-code: 200
-      body:
-        success: true
+        body:
+          success: true
+
 
 
     - id: check-bad-token
