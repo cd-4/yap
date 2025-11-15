@@ -181,6 +181,7 @@ class ApiTestStep:
 
         for key in body_assertions:
             desired_val = body_assertions[key]
+
             assertion = BodyAssertion(self, key, desired_val, response_body)
             self.add_assertion(assertion)
 
@@ -199,7 +200,13 @@ class ApiTest:
         self.name = name
         self.testfile = testfile
         self.data = data
+        self.vars = self.data.get("vars", {})
         self.config = config
+
+    def get_var(self, var_name):
+        if var_name in self.vars:
+            return self.vars[var_name]
+        return self.config.get_variable(var_name)
 
     def __repr__(self) -> str:
         file_path = self.testfile._get_readable_path()
