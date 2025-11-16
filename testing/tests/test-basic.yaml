@@ -33,8 +33,6 @@ test-create-user:
         status-code: 200
         body:
           success: false
-          #len(asdf): asdf
-          #somethin.something: asdf
 
 
 
