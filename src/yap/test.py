@@ -1,12 +1,18 @@
 import requests
-from typing import Optional
+from typing import Optional, Tuple, Any
 from utils.dict_wrapper import flatten_dict
 
 
 class InvalidTestException:
 
     def __init__(self, test, message):
-        super.__init__(f"Invalid Test: {test} " + message)
+        super().__init__(f"Invalid Test: {test} " + message)
+
+
+class ValueNotFoundInResponseException:
+
+    def __init__(self, value):
+        super().__init__(f"Value not found: {value}")
 
 
 class Assertion:
@@ -134,6 +140,7 @@ class ApiTestStep:
 
         self.completed_assertions = []
         self.should_exit = False
+        self.is_complete = False
 
     def last_assertion(self) -> Optional[Assertion]:
         if self.completed_assertions:
@@ -150,10 +157,24 @@ class ApiTestStep:
     def config(self):
         return self.api_test.config
 
+    def sanitize(self, value):
+        return self.api_test.sanitize(value)
+
     def run(self):
         method = getattr(requests, self.method)
-        response = method(self.url + self.path, json=self.data, headers=self.headers)
-        print(response)
+
+        headers = {}
+        for header, value in self.headers.items():
+            headers[header] = self.sanitize(value)
+
+        data = self.sanitize(self.data)
+
+        print("Headers:")
+        print(headers)
+        print("Body:")
+        print(data)
+        response = method(self.url + self.path, json=data, headers=headers)
+        self.response_data = response.json()
         self.perform_assertions(response)
 
     def add_assertion(self, assertion: Assertion) -> None:
@@ -181,6 +202,9 @@ class ApiTestStep:
 
         for key in body_assertions:
             desired_val = body_assertions[key]
+            if isinstance(desired_val, str) and desired_val.startswith("$"):
+                print(desired_val)
+                desired_val = self.api_test.get_var_value(desired_val)
 
             assertion = BodyAssertion(self, key, desired_val, response_body)
             self.add_assertion(assertion)
@@ -203,7 +227,52 @@ class ApiTest:
         self.vars = self.data.get("vars", {})
         self.config = config
 
-    def get_var(self, var_name):
+    def _split_path(self, value) -> Tuple[str, str]:
+        ind = value.index(".")
+        return value[:ind], value[ind + 1 :]
+
+    def sanitize_value(self, value):
+        if not isinstance(value, str) or not value.startswith("$"):
+            return value
+
+        key, rest = self._split_path(value[1:])
+
+        # Get variables either from test conig, then global config
+        if key == "vars":
+            return self.get_var_value(rest)
+
+        step = self.steps_by_id.get(key, None)
+        if step is None:
+            raise InvalidTestException(self, f"Step ID Not Found (ID: {key})")
+
+        if not step.is_complete:
+            raise InvalidTestException(self, "Step references future step")
+
+        keys = rest.split(".")
+        if keys[0] == "response":
+            jsondata = step.response_data
+            for key in keys[1:]:
+                if key in jsondata:
+                    jsondata = jsondata[key]
+                else:
+                    print(value)
+                    raise ValueNotFoundInResponseException(value)
+            return jsondata
+        raise ValueNotFoundInResponseException(value)
+
+    def sanitize(self, value) -> Any:
+        if isinstance(value, dict):
+            output = {}
+            for key, val in value.items():
+                output[key] = self.sanitize(val)
+            return output
+        elif isinstance(value, list):
+            return [self.sanitize(i) for i in value]
+        else:
+            return self.sanitize_value(value)
+
+    def get_var_value(self, var_name):
+
         if var_name in self.vars:
             return self.vars[var_name]
         return self.config.get_variable(var_name)
@@ -229,8 +298,10 @@ class ApiTest:
         self.generate_steps()
 
         for step in self.test_steps:
+            self.current_step = step
             print("------------")
             step.run()
+            step.is_complete = True
             if step.should_exit:
                 print("Test Failed")
                 print(str(step.last_assertion()))
