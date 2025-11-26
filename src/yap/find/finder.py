@@ -20,7 +20,7 @@ def find_files(search_paths: List[Path], is_valid: Callable[Path, bool]) -> List
 
             if dirnames:
                 subdir_paths = [dir_path / d for d in dirnames]
-                output_files.extend(find_files(subdir_paths), is_valid=is_valid)
+                output_files.extend(find_files(subdir_paths, is_valid=is_valid))
 
     return output_files
 
@@ -30,5 +30,14 @@ def is_test_file(file: Path):
     return re.match(valid_yaml_re, file.name)
 
 
+def is_config_file(file: Path):
+    valid_config_file_re = r"^config.ya?ml$"
+    return re.match(valid_config_file_re, file.name)
+
+
 def find_test_files(search_paths: List[Path]):
     return find_files(search_paths, is_test_file)
+
+
+def find_config_files(search_paths: List[Path]):
+    return find_files(search_paths: is_config_file)

@@ -44,7 +44,7 @@ class TestDiscoverer:
         return test_files
 
     def find_test_files(self) -> List[TestFile]:
-        raise Exception(find_test_files(self.search_paths))
+        return find_test_files(self.search_paths)
 
         test_files = []
         for path in self.search_paths:
