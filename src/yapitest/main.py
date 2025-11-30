@@ -1,14 +1,18 @@
-from config import YapConfig
 from pathlib import Path
 from argparse import ArgumentParser
-from find.test_finder import TestDiscoverer
+from find.finder import find_test_files, find_config_files
+from test.file import TestFile
+from test.config import ConfigFile
 
 
 class YapProject:
 
     def __init__(self, args):
         self.args = args
-        self.config = YapConfig.find_config()
+        # self.config = YapConfig.find_config()
+        self.configs = self.find_configs()
+        self.tests = self.find_tests()
+        """
         self.discoverer = TestDiscoverer(
             args.test_paths,
             args.group,
@@ -16,12 +20,30 @@ class YapProject:
             args.include,
             self.config,
         )
+        """
         # self.setups = TestSetupFinder().find_setups(args.test_paths)
 
     def run(self):
-        tests = self.discoverer.find_tests()
-        for test in tests:
+        for test in self.tests:
+            test.set_configs(self.configs)
             test.run()
+
+    def find_tests(self):
+        test_files = [TestFile(tf) for tf in find_test_files(self.args.test_paths)]
+        # TODO: Filter Test Files
+
+        all_tests = []
+        for tf in test_files:
+            all_tests.extend(tf.get_tests())
+
+        # TODO: Filter Tests
+
+        return all_tests
+
+    def find_configs(self):
+        all_configs = find_config_files(self.args.test_paths)
+        configs = [ConfigFile(cf) for cf in all_configs]
+        return configs
 
 
 def get_parser():
